@@ -71,21 +71,38 @@ class Game extends React.Component {
       });
     });
 
+    socket.addEventListener('close', (event) => {
+      this.setState({
+        allPlayersReady: false,
+      });
+      //Passiert, wenn der Server stoppt.
+    });
+
+    socket.addEventListener('error', (event) => {
+      this.setState({
+        allPlayersReady: false,
+      });
+      console.log('Server nicht erreichbar!');
+      setTimeout(()=>{
+        this.connectToGameServer();
+      }, 5000)
+    });
+
   }
 
-  isMyTurn(){
-    return (this.state.role === 'X' && this.state.xIsNext) 
-    || (this.state.role === 'O' && !this.state.xIsNext);
+  isMyTurn() {
+    return (this.state.role === 'X' && this.state.xIsNext === true)
+      || (this.state.role === 'O' && this.state.xIsNext === false);
   }
 
   handleClick(i) {
     const squares = this.state.squares;
 
-    if (calclulateWinner(squares) || squares[i] || this.isMyTurn()) {
+    if (calclulateWinner(squares) || squares[i] || !this.isMyTurn()) {
       return;
     }
 
-    socket.send(JSON.stringify({ sI : i }));
+    socket.send(JSON.stringify({ selectedSquare: i }));
   }
 
   render() {
