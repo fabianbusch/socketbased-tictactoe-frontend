@@ -2,8 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import './index.css';
 
-var socket;
-
 function Square(props) {
   return (
     <button className="square" onClick={props.onClick}>
@@ -50,6 +48,9 @@ class Game extends React.Component {
       allPlayersReady: false,
     };
 
+    this.socket = null;
+    this.noConnTimout = null;
+
     this.connectToGameServer = this.connectToGameServer.bind(this);
     this.isMyTurn = this.isMyTurn.bind(this);
     this.handleClick = this.handleClick.bind(this);
@@ -58,10 +59,14 @@ class Game extends React.Component {
   }
 
   connectToGameServer() {
-    socket = new WebSocket("ws://localhost:8080");
+    this.socket = new WebSocket("ws://localhost:8080");
+
+    this.socket.addEventListener('open', (event) => {
+      console.log('Connection open...');
+    });
 
     // Connection opened
-    socket.addEventListener('message', (message) => {
+    this.socket.addEventListener('message', (message) => {
       let st = JSON.parse(message.data);
       this.setState({
         squares: st.squares,
@@ -71,21 +76,27 @@ class Game extends React.Component {
       });
     });
 
-    socket.addEventListener('close', (event) => {
+    this.socket.addEventListener('close', (event) => {
       this.setState({
         allPlayersReady: false,
       });
+      console.log('Socket closed!');
       //Passiert, wenn der Server stoppt.
+      this.noConnTimout = setTimeout(()=>{
+        this.socket = null;
+        this.connectToGameServer();
+      }, 5000);
     });
 
-    socket.addEventListener('error', (event) => {
+    this.socket.addEventListener('error', (event) => {
       this.setState({
         allPlayersReady: false,
       });
       console.log('Server nicht erreichbar!');
-      setTimeout(()=>{
+      this.noConnTimout = setTimeout(()=>{
+        this.socket = null;
         this.connectToGameServer();
-      }, 5000)
+      }, 5000);
     });
 
   }
@@ -102,7 +113,7 @@ class Game extends React.Component {
       return;
     }
 
-    socket.send(JSON.stringify({ selectedSquare: i }));
+    this.socket.send(JSON.stringify({ selectedSquare: i }));
   }
 
   render() {
