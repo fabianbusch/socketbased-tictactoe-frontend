@@ -10,11 +10,19 @@ function Square(props) {
   );
 }
 
+function RestartButton(props) {
+  return (
+    <button className="restart-button" onClick={props.onClick}>
+      Neues Spiel
+    </button>
+  )
+}
+
 class Board extends React.Component {
 
   renderSquare(i) {
     return <Square key={i} value={this.props.squares[i]}
-      onClick={() => this.props.onClick(i)} />;
+      onClick={() => {this.props.onClick(i)}} />;
   }
 
   render() {
@@ -113,7 +121,11 @@ class Game extends React.Component {
       return;
     }
 
-    this.socket.send(JSON.stringify({ selectedSquare: i }));
+    this.socket.send(JSON.stringify({ cmd: 'nextStep', selectedSquare: i }));
+  }
+
+  gameRestart(){
+    this.socket.send(JSON.stringify({ cmd: 'newGame' }));
   }
 
   render() {
@@ -135,11 +147,12 @@ class Game extends React.Component {
       return (
         <div className="game" >
           <div className="game-board">
-            <Board squares={squares} onClick={(i) => this.handleClick(i)} />
+            <Board squares={squares} onClick={(i) => {this.handleClick(i)}} />
           </div>
           <div className="game-info">
             <div>{status}</div>
-            <div>Du bist {whoAmI}</div>
+            {status && <div>Du bist {whoAmI}</div>}
+            {winner && <RestartButton onClick={() => {this.gameRestart()}}></RestartButton>}
           </div>
         </div >
       );
