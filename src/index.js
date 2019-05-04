@@ -67,7 +67,7 @@ class Game extends React.Component {
   }
 
   connectToGameServer() {
-    this.socket = new WebSocket("ws://localhost:8080");
+    this.socket = new WebSocket("ws://192.168.0.105:8080");
 
     this.socket.addEventListener('open', (event) => {
       console.log('Connection open...');
